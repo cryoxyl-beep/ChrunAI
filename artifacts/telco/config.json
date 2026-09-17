@@ -1,0 +1,69 @@
+{
+  "name": "telco",
+  "label": "IBM Telco",
+  "id_col": "customerID",
+  "target_col": "Churn",
+  "numeric_features": [
+    "SeniorCitizen",
+    "tenure",
+    "MonthlyCharges",
+    "TotalCharges"
+  ],
+  "categorical_features": [
+    "gender",
+    "Partner",
+    "Dependents",
+    "PhoneService",
+    "MultipleLines",
+    "InternetService",
+    "OnlineSecurity",
+    "OnlineBackup",
+    "DeviceProtection",
+    "TechSupport",
+    "StreamingTV",
+    "StreamingMovies",
+    "Contract",
+    "PaperlessBilling",
+    "PaymentMethod"
+  ],
+  "feature_columns": [
+    "SeniorCitizen",
+    "tenure",
+    "MonthlyCharges",
+    "TotalCharges",
+    "gender",
+    "Partner",
+    "Dependents",
+    "PhoneService",
+    "MultipleLines",
+    "InternetService",
+    "OnlineSecurity",
+    "OnlineBackup",
+    "DeviceProtection",
+    "TechSupport",
+    "StreamingTV",
+    "StreamingMovies",
+    "Contract",
+    "PaperlessBilling",
+    "PaymentMethod"
+  ],
+  "rule_columns": [
+    "customerID",
+    "Contract",
+    "PaymentMethod",
+    "tenure",
+    "InternetService",
+    "OnlineSecurity",
+    "TechSupport",
+    "MonthlyCharges",
+    "Churn"
+  ],
+  "display_columns": [
+    "customerID",
+    "Contract",
+    "tenure",
+    "PaymentMethod",
+    "MonthlyCharges",
+    "Churn"
+  ]
+}

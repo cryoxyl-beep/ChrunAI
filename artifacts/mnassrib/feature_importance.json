@@ -1,0 +1,102 @@
+[
+  {
+    "feature": "num__Total day minutes",
+    "importance": 0.13662372793801028
+  },
+  {
+    "feature": "num__Total day charge",
+    "importance": 0.12523407524419797
+  },
+  {
+    "feature": "num__Customer service calls",
+    "importance": 0.0860368087915717
+  },
+  {
+    "feature": "num__Total eve charge",
+    "importance": 0.05327374123830731
+  },
+  {
+    "feature": "num__Total eve minutes",
+    "importance": 0.051848988757004534
+  },
+  {
+    "feature": "cat__International plan_No",
+    "importance": 0.045168473512294145
+  },
+  {
+    "feature": "num__Total intl calls",
+    "importance": 0.04391179893687926
+  },
+  {
+    "feature": "num__Total intl charge",
+    "importance": 0.04233158777410646
+  },
+  {
+    "feature": "num__Total intl minutes",
+    "importance": 0.042165093815445774
+  },
+  {
+    "feature": "cat__International plan_Yes",
+    "importance": 0.03826374777319635
+  },
+  {
+    "feature": "num__Total night minutes",
+    "importance": 0.03732929433179945
+  },
+  {
+    "feature": "num__Total night charge",
+    "importance": 0.03705612921257456
+  },
+  {
+    "feature": "num__Total day calls",
+    "importance": 0.03581189915297789
+  },
+  {
+    "feature": "num__Total night calls",
+    "importance": 0.03224190939926
+  },
+  {
+    "feature": "num__Account length",
+    "importance": 0.03123300130436786
+  },
+  {
+    "feature": "num__Total eve calls",
+    "importance": 0.0297893014500734
+  },
+  {
+    "feature": "num__Number vmail messages",
+    "importance": 0.018723156380270778
+  },
+  {
+    "feature": "cat__Voice mail plan_No",
+    "importance": 0.012101879898345264
+  },
+  {
+    "feature": "cat__Voice mail plan_Yes",
+    "importance": 0.009705244424124761
+  },
+  {
+    "feature": "num__Area code",
+    "importance": 0.00940436217930157
+  },
+  {
+    "feature": "cat__State_TX",
+    "importance": 0.004308748299789994
+  },
+  {
+    "feature": "cat__State_NJ",
+    "importance": 0.0031378905754151547
+  },
+  {
+    "feature": "cat__State_MT",
+    "importance": 0.0031182471348608423
+  },
+  {
+    "feature": "cat__State_SC",
+    "importance": 0.002408598219738895
+  },
+  {
+    "feature": "cat__State_MD",
+    "importance": 0.002191135327623465
+  }
+]

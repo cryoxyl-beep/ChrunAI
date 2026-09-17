@@ -1,0 +1,19 @@
+{
+  "dataset": "singtel",
+  "label": "Singtel Telecom",
+  "accuracy": 0.948,
+  "roc_auc": 0.9287890421816561,
+  "confusion_matrix": [
+    [
+      853,
+      6
+    ],
+    [
+      46,
+      95
+    ]
+  ],
+  "train_rows": 4000,
+  "test_rows": 1000,
+  "churn_rate": 0.1414
+}

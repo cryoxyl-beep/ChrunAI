@@ -1,0 +1,19 @@
+{
+  "dataset": "mnassrib",
+  "label": "Mnassrib BigML",
+  "accuracy": 0.9355322338830585,
+  "roc_auc": 0.9317236389943931,
+  "confusion_matrix": [
+    [
+      569,
+      1
+    ],
+    [
+      42,
+      55
+    ]
+  ],
+  "train_rows": 2666,
+  "test_rows": 667,
+  "churn_rate": 0.14491449144914492
+}

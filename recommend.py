@@ -1,4 +1,4 @@
-"""Rule-based retention actions + optional Gemini polish."""
+"""Rule-based retention actions + optional Gemini polish (dataset-aware)."""
 
 from __future__ import annotations
 
@@ -8,55 +8,58 @@ from typing import Any
 import pandas as pd
 
 
-def _hint_contract(row: pd.Series) -> str | None:
-    if row.get("Contract") == "Month-to-month":
-        return "Month-to-month contract (higher churn risk)"
+def _get(row: pd.Series, *names: str):
+    for n in names:
+        if n in row.index and pd.notna(row.get(n)):
+            return row.get(n)
+    # case-insensitive fallback
+    lower_map = {str(c).lower(): c for c in row.index}
+    for n in names:
+        key = n.lower()
+        if key in lower_map:
+            val = row.get(lower_map[key])
+            if pd.notna(val):
+                return val
     return None
 
 
-def _hint_payment(row: pd.Series) -> str | None:
-    if row.get("PaymentMethod") == "Electronic check":
-        return "Electronic check payment (often linked to churn)"
-    return None
+def customer_risk_hints(row: pd.Series, dataset: str = "telco") -> list[str]:
+    if dataset == "telco":
+        return _telco_hints(row)
+    return _orange_style_hints(row)
 
 
-def _hint_tenure(row: pd.Series) -> str | None:
-    tenure = row.get("tenure")
+def rule_based_recommendations(
+    row: pd.Series, dataset: str = "telco"
+) -> list[dict[str, Any]]:
+    if dataset == "telco":
+        return _telco_rules(row)
+    return _orange_style_rules(row)
+
+
+def _telco_hints(row: pd.Series) -> list[str]:
+    hints: list[str] = []
+    if _get(row, "Contract") == "Month-to-month":
+        hints.append("Month-to-month contract (higher churn risk)")
+    if _get(row, "PaymentMethod") == "Electronic check":
+        hints.append("Electronic check payment (often linked to churn)")
+    tenure = _get(row, "tenure")
     if tenure is not None and float(tenure) < 12:
-        return f"Short tenure ({int(tenure)} months)"
-    return None
-
-
-def _hint_fiber_addons(row: pd.Series) -> str | None:
-    if row.get("InternetService") == "Fiber optic":
-        sec = row.get("OnlineSecurity")
-        tech = row.get("TechSupport")
+        hints.append(f"Short tenure ({int(tenure)} months)")
+    if _get(row, "InternetService") == "Fiber optic":
+        sec = _get(row, "OnlineSecurity")
+        tech = _get(row, "TechSupport")
         if sec in ("No", "No internet service") or tech in ("No", "No internet service"):
-            return "Fiber customer without security/tech support add-ons"
-    return None
-
-
-def _hint_charges(row: pd.Series) -> str | None:
-    charges = row.get("MonthlyCharges")
+            hints.append("Fiber customer without security/tech support add-ons")
+    charges = _get(row, "MonthlyCharges")
     if charges is not None and float(charges) > 70:
-        return f"High monthly charges (${float(charges):.2f})"
-    return None
+        hints.append(f"High monthly charges (${float(charges):.2f})")
+    return hints
 
 
-RISKY_VALUE_CHECKS = [
-    _hint_contract,
-    _hint_payment,
-    _hint_tenure,
-    _hint_fiber_addons,
-    _hint_charges,
-]
-
-
-def rule_based_recommendations(row: pd.Series) -> list[dict[str, Any]]:
-    """Return structured retention actions from business rules."""
+def _telco_rules(row: pd.Series) -> list[dict[str, Any]]:
     actions: list[dict[str, Any]] = []
-
-    if row.get("Contract") == "Month-to-month":
+    if _get(row, "Contract") == "Month-to-month":
         actions.append(
             {
                 "priority": 1,
@@ -65,8 +68,7 @@ def rule_based_recommendations(row: pd.Series) -> list[dict[str, Any]]:
                 "feature": "Contract",
             }
         )
-
-    if row.get("PaymentMethod") == "Electronic check":
+    if _get(row, "PaymentMethod") == "Electronic check":
         actions.append(
             {
                 "priority": 2,
@@ -75,9 +77,8 @@ def rule_based_recommendations(row: pd.Series) -> list[dict[str, Any]]:
                 "feature": "PaymentMethod",
             }
         )
-
-    tenure = float(row.get("tenure", 0))
-    if tenure < 12:
+    tenure = _get(row, "tenure")
+    if tenure is not None and float(tenure) < 12:
         actions.append(
             {
                 "priority": 2,
@@ -86,10 +87,9 @@ def rule_based_recommendations(row: pd.Series) -> list[dict[str, Any]]:
                 "feature": "tenure",
             }
         )
-
-    if row.get("InternetService") == "Fiber optic":
-        sec = row.get("OnlineSecurity")
-        tech = row.get("TechSupport")
+    if _get(row, "InternetService") == "Fiber optic":
+        sec = _get(row, "OnlineSecurity")
+        tech = _get(row, "TechSupport")
         if sec in ("No", "No internet service") or tech in ("No", "No internet service"):
             actions.append(
                 {
@@ -99,30 +99,114 @@ def rule_based_recommendations(row: pd.Series) -> list[dict[str, Any]]:
                     "feature": "InternetService",
                 }
             )
-
-    charges = float(row.get("MonthlyCharges", 0))
-    if charges > 70:
+    charges = _get(row, "MonthlyCharges")
+    if charges is not None and float(charges) > 70:
         actions.append(
             {
                 "priority": 3,
                 "action": "Review plan fit and offer a tailored downgrade or loyalty discount.",
-                "rationale": f"Monthly charges are ${charges:.2f}, which may drive price-sensitive churn.",
+                "rationale": f"Monthly charges are ${float(charges):.2f}, which may drive price-sensitive churn.",
                 "feature": "MonthlyCharges",
             }
         )
+    return actions or [_generic_fallback()]
 
-    if not actions:
+
+def _norm_yes(val) -> bool:
+    if val is None:
+        return False
+    if isinstance(val, bool):
+        return val
+    s = str(val).strip().rstrip(".").lower()
+    return s in {"yes", "true", "y", "1"}
+
+
+def _orange_style_hints(row: pd.Series) -> list[str]:
+    hints: list[str] = []
+    intl = _get(row, "International Plan", "International plan")
+    if _norm_yes(intl):
+        hints.append("Has international plan (often higher churn risk)")
+    vmail = _get(row, "Voice mail Plan", "Voice mail plan")
+    if vmail is not None and not _norm_yes(vmail):
+        hints.append("No voice mail plan")
+    svc = _get(
+        row,
+        "Number Customer Service calls",
+        "Customer service calls",
+    )
+    if svc is not None and float(svc) >= 3:
+        hints.append(f"High customer service calls ({int(float(svc))})")
+    day = _get(row, "Total day Charge", "Total day charge")
+    if day is not None and float(day) > 40:
+        hints.append(f"High daytime charges ({float(day):.2f})")
+    acct = _get(row, "Account Length", "Account length")
+    if acct is not None and float(acct) < 50:
+        hints.append(f"Short account length ({int(float(acct))} days/periods)")
+    return hints
+
+
+def _orange_style_rules(row: pd.Series) -> list[dict[str, Any]]:
+    actions: list[dict[str, Any]] = []
+    intl = _get(row, "International Plan", "International plan")
+    if _norm_yes(intl):
+        actions.append(
+            {
+                "priority": 1,
+                "action": "Audit international plan value and offer a loyalty rate lock.",
+                "rationale": "International-plan subscribers churn more often when charges feel high.",
+                "feature": "International Plan",
+            }
+        )
+    svc = _get(row, "Number Customer Service calls", "Customer service calls")
+    if svc is not None and float(svc) >= 3:
+        actions.append(
+            {
+                "priority": 1,
+                "action": "Assign a retention specialist and resolve open support issues within 48h.",
+                "rationale": f"Customer has {int(float(svc))} service calls — friction predicts churn.",
+                "feature": "Customer service calls",
+            }
+        )
+    vmail = _get(row, "Voice mail Plan", "Voice mail plan")
+    if vmail is not None and not _norm_yes(vmail):
+        actions.append(
+            {
+                "priority": 2,
+                "action": "Offer a complimentary voice-mail / messaging trial for 1 month.",
+                "rationale": "Customers without voice mail show higher churn in Orange/Singtel-style data.",
+                "feature": "Voice mail Plan",
+            }
+        )
+    day = _get(row, "Total day Charge", "Total day charge")
+    if day is not None and float(day) > 40:
+        actions.append(
+            {
+                "priority": 2,
+                "action": "Propose a usage-based day plan or bundled minutes discount.",
+                "rationale": f"Daytime charge is {float(day):.2f} — price sensitivity risk.",
+                "feature": "Total day Charge",
+            }
+        )
+    acct = _get(row, "Account Length", "Account length")
+    if acct is not None and float(acct) < 50:
         actions.append(
             {
                 "priority": 3,
-                "action": "Send a proactive satisfaction survey and personalized retention offer.",
-                "rationale": "No single dominant rule fired; general retention outreach is appropriate.",
-                "feature": "general",
+                "action": "Run early-lifecycle welcome outreach with onboarding tips.",
+                "rationale": f"Account length is only {int(float(acct))} — new customers need nurture.",
+                "feature": "Account Length",
             }
         )
+    return actions or [_generic_fallback()]
 
-    actions.sort(key=lambda x: x["priority"])
-    return actions
+
+def _generic_fallback() -> dict[str, Any]:
+    return {
+        "priority": 3,
+        "action": "Send a proactive satisfaction survey and personalized retention offer.",
+        "rationale": "No single dominant rule fired; general retention outreach is appropriate.",
+        "feature": "general",
+    }
 
 
 def format_rules_as_markdown(actions: list[dict[str, Any]]) -> str:
@@ -132,33 +216,44 @@ def format_rules_as_markdown(actions: list[dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
-def customer_risk_hints(row: pd.Series) -> list[str]:
-    hints: list[str] = []
-    for check in RISKY_VALUE_CHECKS:
-        msg = check(row)
-        if msg:
-            hints.append(msg)
-    return hints
-
-
 def decode_importance_label(encoded_name: str) -> str:
-    """Turn sklearn feature name into a short label."""
     name = encoded_name.replace("num__", "").replace("cat__", "")
-    if name.startswith("Contract_"):
-        return "Contract type"
-    if name.startswith("PaymentMethod_"):
-        return "Payment method"
-    if name == "tenure":
-        return "Tenure (months)"
-    if name == "MonthlyCharges":
-        return "Monthly charges"
-    if name == "TotalCharges":
-        return "Total charges"
-    if name.startswith("InternetService_"):
-        return "Internet service"
-    if name.startswith("OnlineSecurity_"):
-        return "Online security"
     return name.replace("_", " ")
+
+
+# Groq model IDs (developer tier) — see https://console.groq.com/docs/models
+# Llama 3.1/3.3 IDs were deprecated Aug 2026; use OSS + Qwen instead.
+GROQ_RECOMMENDATION_MODELS: dict[str, str] = {
+    "GPT OSS 20B (fast)": "openai/gpt-oss-20b",
+    "Qwen 3.6 27B": "qwen/qwen3.6-27b",
+    "Groq Compound Mini": "groq/compound-mini",
+}
+
+
+def build_retention_prompt(
+    row: pd.Series,
+    probability: float,
+    tier: str,
+    actions: list[dict[str, Any]],
+    dataset: str = "telco",
+) -> str:
+    rules_text = "\n".join(
+        f"- [{a['priority']}] {a['action']} ({a['rationale']})" for a in actions
+    )
+    fields = {k: row.get(k) for k in row.index if k not in ("churn_probability",)}
+    summary_keys = list(fields.keys())[:12]
+    customer_summary = ", ".join(f"{k}={fields[k]}" for k in summary_keys)
+    return f"""You are a telecom retention analyst for dataset "{dataset}".
+Write a short actionable retention plan (4-6 bullets).
+
+Facts only (do not invent):
+- Churn probability: {probability:.1%}
+- Risk tier: {tier}
+- Customer snapshot: {customer_summary}
+- Rule-based actions:
+{rules_text}
+
+Tone: professional CRM note. Mention probability and tier once."""
 
 
 def polish_with_gemini(
@@ -167,8 +262,8 @@ def polish_with_gemini(
     tier: str,
     actions: list[dict[str, Any]],
     api_key: str | None = None,
+    dataset: str = "telco",
 ) -> str:
-    """Single-shot Gemini call; raises on failure so caller can fall back."""
     key = api_key or os.environ.get("GEMINI_API_KEY")
     if not key:
         raise ValueError("GEMINI_API_KEY not set")
@@ -177,27 +272,77 @@ def polish_with_gemini(
 
     genai.configure(api_key=key)
     model = genai.GenerativeModel("gemini-3.6-flash")
-
-    rules_text = "\n".join(
-        f"- [{a['priority']}] {a['action']} ({a['rationale']})" for a in actions
-    )
-    customer_summary = (
-        f"customerID={row.get('customerID')}, Contract={row.get('Contract')}, "
-        f"tenure={row.get('tenure')}, PaymentMethod={row.get('PaymentMethod')}, "
-        f"InternetService={row.get('InternetService')}, "
-        f"MonthlyCharges={row.get('MonthlyCharges')}"
-    )
-
-    prompt = f"""You are a telco customer retention analyst. Write a short, actionable retention plan (4-6 bullet points) for this at-risk customer.
-
-Use ONLY these facts (do not invent data):
-- Churn probability: {probability:.1%}
-- Risk tier: {tier}
-- Customer: {customer_summary}
-- Rule-based actions already identified:
-{rules_text}
-
-Tone: professional, specific, suitable for a CRM note. Mention probability and tier once."""
-
+    prompt = build_retention_prompt(row, probability, tier, actions, dataset)
     response = model.generate_content(prompt)
     return response.text.strip()
+
+
+def polish_with_groq(
+    row: pd.Series,
+    probability: float,
+    tier: str,
+    actions: list[dict[str, Any]],
+    model_id: str,
+    api_key: str | None = None,
+    dataset: str = "telco",
+) -> str:
+    key = api_key or os.environ.get("GROQ_API_KEY")
+    if not key:
+        raise ValueError("GROQ_API_KEY not set")
+
+    from groq import Groq
+
+    client = Groq(api_key=key)
+    prompt = build_retention_prompt(row, probability, tier, actions, dataset)
+    completion = client.chat.completions.create(
+        model=model_id,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.4,
+        max_tokens=1024,
+    )
+    return (completion.choices[0].message.content or "").strip()
+
+
+def generate_multi_llm_recommendations(
+    row: pd.Series,
+    probability: float,
+    tier: str,
+    actions: list[dict[str, Any]],
+    dataset: str,
+    gemini_key: str | None,
+    groq_key: str | None,
+    use_gemini: bool = True,
+    groq_model_ids: list[str] | None = None,
+) -> list[tuple[str, str]]:
+    """Return list of (display_name, text_or_error)."""
+    results: list[tuple[str, str]] = []
+
+    if use_gemini and (gemini_key or os.environ.get("GEMINI_API_KEY")):
+        try:
+            text = polish_with_gemini(
+                row, probability, tier, actions, api_key=gemini_key, dataset=dataset
+            )
+            results.append(("Gemini 3.6 Flash", text))
+        except Exception as e:
+            results.append(("Gemini 3.6 Flash", f"Error: {e}"))
+
+    if groq_key or os.environ.get("GROQ_API_KEY"):
+        ids = groq_model_ids or list(GROQ_RECOMMENDATION_MODELS.values())
+        label_by_id = {v: k for k, v in GROQ_RECOMMENDATION_MODELS.items()}
+        for model_id in ids:
+            label = label_by_id.get(model_id, model_id)
+            try:
+                text = polish_with_groq(
+                    row,
+                    probability,
+                    tier,
+                    actions,
+                    model_id=model_id,
+                    api_key=groq_key,
+                    dataset=dataset,
+                )
+                results.append((f"Groq · {label}", text))
+            except Exception as e:
+                results.append((f"Groq · {label}", f"Error: {e}"))
+
+    return results
