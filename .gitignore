@@ -3,7 +3,7 @@ __pycache__/
 .venv/
 venv/
 .env
-model.joblib
-scored_customers.csv
-metrics.json
-feature_importance.json
+/model.joblib
+/scored_customers.csv
+/metrics.json
+/feature_importance.json

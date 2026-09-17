@@ -1,0 +1,102 @@
+[
+  {
+    "feature": "num__TotalCharges",
+    "importance": 0.15972257845245863
+  },
+  {
+    "feature": "num__tenure",
+    "importance": 0.1395767494643251
+  },
+  {
+    "feature": "num__MonthlyCharges",
+    "importance": 0.13705411742033366
+  },
+  {
+    "feature": "cat__Contract_Month-to-month",
+    "importance": 0.049974084419480924
+  },
+  {
+    "feature": "cat__OnlineSecurity_No",
+    "importance": 0.03282674475804915
+  },
+  {
+    "feature": "cat__PaymentMethod_Electronic check",
+    "importance": 0.031370475913330156
+  },
+  {
+    "feature": "cat__InternetService_Fiber optic",
+    "importance": 0.028669715607473036
+  },
+  {
+    "feature": "cat__TechSupport_No",
+    "importance": 0.024004264623240183
+  },
+  {
+    "feature": "num__SeniorCitizen",
+    "importance": 0.01957478015801526
+  },
+  {
+    "feature": "cat__OnlineBackup_No",
+    "importance": 0.019111287639887214
+  },
+  {
+    "feature": "cat__gender_Male",
+    "importance": 0.018488816577567194
+  },
+  {
+    "feature": "cat__gender_Female",
+    "importance": 0.017366745769924013
+  },
+  {
+    "feature": "cat__PaperlessBilling_Yes",
+    "importance": 0.016617721462856103
+  },
+  {
+    "feature": "cat__Contract_Two year",
+    "importance": 0.016312538956361672
+  },
+  {
+    "feature": "cat__PaperlessBilling_No",
+    "importance": 0.014908603355951915
+  },
+  {
+    "feature": "cat__DeviceProtection_No",
+    "importance": 0.014904346150320795
+  },
+  {
+    "feature": "cat__Partner_Yes",
+    "importance": 0.014639992226574394
+  },
+  {
+    "feature": "cat__Partner_No",
+    "importance": 0.014184316742674256
+  },
+  {
+    "feature": "cat__MultipleLines_No",
+    "importance": 0.01331280938664071
+  },
+  {
+    "feature": "cat__InternetService_DSL",
+    "importance": 0.012866551946310817
+  },
+  {
+    "feature": "cat__MultipleLines_Yes",
+    "importance": 0.01283102062590432
+  },
+  {
+    "feature": "cat__OnlineBackup_Yes",
+    "importance": 0.012762186947766057
+  },
+  {
+    "feature": "cat__Dependents_No",
+    "importance": 0.012528593040646841
+  },
+  {
+    "feature": "cat__TechSupport_Yes",
+    "importance": 0.012216407191084704
+  },
+  {
+    "feature": "cat__PaymentMethod_Credit card (automatic)",
+    "importance": 0.012008740761564558
+  }
+]
