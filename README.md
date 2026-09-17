@@ -26,7 +26,7 @@ Predict telco customer churn, segment risk, explain drivers, and suggest retenti
 |-------|--------|
 | **ML** | Python, pandas, scikit-learn, joblib |
 | **Model** | `RandomForestClassifier` (100 trees, `random_state=42`) |
-| **UI** | Streamlit |
+| **UI** | Next.js (`web/`) + Streamlit (`app.py`) |
 | **LLM** | Google Gemini (`gemini-3.6-flash`) via `google-generativeai` |
 
 ---
@@ -86,8 +86,9 @@ After training, **every row** in the dataset is scored and saved to `scored_cust
 | `scored_customers.csv` | All customers + scores (app reads this) |
 | `metrics.json` | Holdout accuracy, AUC, confusion matrix |
 | `feature_importance.json` | Top encoded features for charts |
+| `web/public/data/*.json` | Same metrics + scored rows for the Next.js UI |
 
-These generated files are gitignored; recreate them with `python train.py`.
+Root-level `metrics.json`, `scored_customers.csv`, and `model.joblib` are gitignored; recreate everything with `python train.py` (including `web/public/data/`).
 
 ---
 
@@ -118,6 +119,28 @@ git clone https://github.com/cryoxyl-beep/ChrunAI.git
 cd ChrunAI
 python -m pip install -r requirements.txt
 python train.py
+```
+
+### Next.js UI (recommended for demo)
+
+`train.py` writes `web/public/data/scored_customers.json`, `metrics.json`, and `feature_importance.json`.
+
+```bash
+cd web
+cp .env.local.example .env.local   # optional: add GEMINI_API_KEY for AI briefing
+npm install
+npm run dev
+```
+
+Open **http://localhost:3000**.
+
+Sanity check: `npm run build` && `npm start` (still local).
+
+**Gemini (optional):** set `GEMINI_API_KEY` in `web/.env.local`. Lookup falls back to rule-based actions if the key is missing or the API fails.
+
+### Streamlit UI (Python-only)
+
+```bash
 streamlit run app.py
 ```
 
@@ -132,11 +155,29 @@ Open **http://localhost:8501** (or the port Streamlit prints).
 ```
 ChrunAI/
 ├── data/telco_customer_churn.csv
-├── train.py           # Train model + write artifacts
-├── recommend.py       # Rules + Gemini helper
+├── train.py           # Train model + write artifacts (+ web/public/data)
+├── recommend.py       # Rules + Gemini helper (Streamlit)
 ├── app.py             # Streamlit UI
+├── web/               # Next.js App Router UI
+│   ├── app/api/recommend/   # Gemini route (server-side key)
+│   ├── components/          # Midnight signal design system
+│   ├── lib/                 # Types, rules (TS), data loaders
+│   └── public/data/         # JSON from train.py
 ├── requirements.txt
 └── README.md
+```
+
+```mermaid
+flowchart LR
+  Train[train.py]
+  Json[web/public/data]
+  Next[Next.js :3000]
+  Api["/api/recommend"]
+  Gemini[Gemini API]
+  Train --> Json
+  Json --> Next
+  Next --> Api
+  Api --> Gemini
 ```
 
 ---

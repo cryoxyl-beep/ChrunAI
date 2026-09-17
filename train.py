@@ -21,6 +21,10 @@ MODEL_PATH = ROOT / "model.joblib"
 SCORED_PATH = ROOT / "scored_customers.csv"
 METRICS_PATH = ROOT / "metrics.json"
 IMPORTANCE_PATH = ROOT / "feature_importance.json"
+WEB_DATA_DIR = ROOT / "web" / "public" / "data"
+WEB_SCORED_JSON = WEB_DATA_DIR / "scored_customers.json"
+WEB_METRICS_JSON = WEB_DATA_DIR / "metrics.json"
+WEB_IMPORTANCE_JSON = WEB_DATA_DIR / "feature_importance.json"
 
 # Risk tier thresholds (explicit for judges)
 TIER_LOW = 0.30
@@ -150,10 +154,17 @@ def main() -> None:
     }
 
     joblib.dump(pipeline, MODEL_PATH)
+    importance = export_feature_importance(pipeline)
     with open(METRICS_PATH, "w", encoding="utf-8") as f:
         json.dump(metrics, f, indent=2)
     with open(IMPORTANCE_PATH, "w", encoding="utf-8") as f:
-        json.dump(export_feature_importance(pipeline), f, indent=2)
+        json.dump(importance, f, indent=2)
+
+    WEB_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    with open(WEB_METRICS_JSON, "w", encoding="utf-8") as f:
+        json.dump(metrics, f, indent=2)
+    with open(WEB_IMPORTANCE_JSON, "w", encoding="utf-8") as f:
+        json.dump(importance, f, indent=2)
 
     probs = pipeline.predict_proba(X)[:, 1]
     preds = pipeline.predict(X)
@@ -162,11 +173,15 @@ def main() -> None:
     scored["predicted_churn"] = ["Yes" if p == 1 else "No" for p in preds]
     scored["risk_tier"] = [risk_tier(p) for p in probs]
     scored.to_csv(SCORED_PATH, index=False)
+    scored.to_json(WEB_SCORED_JSON, orient="records", indent=2)
 
     print("Training complete.")
     print(f"  Accuracy: {metrics['accuracy']:.4f}")
     print(f"  ROC-AUC:  {metrics['roc_auc']:.4f}")
-    print(f"  Saved: {MODEL_PATH.name}, {SCORED_PATH.name}, {METRICS_PATH.name}")
+    print(
+        f"  Saved: {MODEL_PATH.name}, {SCORED_PATH.name}, {METRICS_PATH.name}, "
+        f"{WEB_DATA_DIR.relative_to(ROOT)}/"
+    )
 
 
 if __name__ == "__main__":

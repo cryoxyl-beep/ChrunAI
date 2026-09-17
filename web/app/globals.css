@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0b0f1a;
+  --foreground: #e2e8f0;
+  --surface: rgba(255, 255, 255, 0.04);
+  --accent: #22d3ee;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-dm-sans);
+  --font-serif: var(--font-instrument-serif);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+}
+
+.mesh-bg {
+  background-color: #0b0f1a;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 20% -10%, rgba(34, 211, 238, 0.12), transparent),
+    radial-gradient(ellipse 60% 40% at 90% 10%, rgba(45, 212, 191, 0.08), transparent),
+    radial-gradient(ellipse 50% 60% at 50% 100%, rgba(99, 102, 241, 0.06), transparent),
+    linear-gradient(180deg, #0b0f1a 0%, #121826 50%, #0b0f1a 100%);
+}
+
+.mesh-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation: fade-in 0.35s ease-out;
+}
+
+@keyframes tier-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 16px rgba(244, 63, 94, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 26px rgba(244, 63, 94, 0.5);
+  }
+}
+
+.animate-tier-pulse {
+  animation: tier-pulse 2.5s ease-in-out infinite;
+}
